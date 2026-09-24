@@ -1,27 +1,38 @@
 # Ruleta El Boom · Gira y Gana
 
-## Uso
-1. El cliente escribe su celular (10 dígitos) y el monto de su compra, y toca "Ver mis giros".
-2. Solo ve cuántos giros obtuvo. Gira hasta terminarlos y al final ve el resumen de premios.
+## Estructura
+```
+index.html          Estructura de la pantalla (textos, formularios, ventanas)
+css/styles.css      Diseño: colores (en :root), tamaños y versiones celular/tablet/laptop
+js/config.js        ← LO MÁS EDITADO: premios por defecto, rangos de giros, palabras prohibidas
+js/wheel.js         Dibujo de la ruleta, acomodo automático del texto (objeto TXT) y flecha
+js/game.js          Flujo: teléfono + monto, giros, resultados, ventanas
+js/admin.js         Panel de configuración (5 toques en el ícono i)
+js/history.js       Mini historial (HIST_MAX = 10)
+js/db.js            Base de datos del dispositivo (IndexedDB)
+js/sound.js         Sonidos
+js/confetti.js      Confeti
+js/install.js       Botón e instrucciones para instalar
+js/main.js          Arranque
+js/utils.js         Funciones de apoyo
+img/logo.jpg        Logo del encabezado (reemplázalo con el mismo nombre)
+icons/              Íconos de la app instalada
+manifest.json       Nombre e íconos de la app instalada
+sw.js               Uso sin internet (sube la versión CACHE al cambiar archivos)
+```
 
-## Configuración (toca 5 veces seguidas el ícono (i))
-- Premios: agregar/quitar y % de probabilidad (debe sumar 100%). Solo premios físicos.
-- Giros por compra: "Desde $X dar N giros" y máximo por compra.
-- Historial: últimos 10 registros (fecha, teléfono, tiros, premios). Al llegar a 10 se reemplaza el más antiguo.
-  Exporta a CSV antes de que se reemplacen si necesitas conservarlos.
-Todo se guarda en el dispositivo mientras se contrata un servidor.
+## Cambios comunes
+- Premios iniciales: `js/config.js` → `DEFAULT_CFG.prizes`. (Si la app ya guardó premios, usa "Restaurar premios originales" en la configuración.)
+- Rangos de giros iniciales: `js/config.js` → `DEFAULT_CFG.tiers` y `maxSpins`.
+- Colores: `css/styles.css` → `:root` (`--gold`, `--bg`, etc.).
+- Texto de la ruleta: `js/wheel.js` → `TXT` (tamaño máximo/mínimo, márgenes). Se elige solo entre texto horizontal o radial.
+- Textos de pantalla: `index.html`.
 
-## Publicar (necesario para poder instalar)
-1. Crea un repositorio en GitHub y sube TODOS los archivos de esta carpeta (sin subcarpetas).
-2. Settings → Pages → Source: "Deploy from a branch" → Branch: main / (root) → Save.
-3. En 1–2 minutos queda en: https://TU-USUARIO.github.io/TU-REPO/
+## Publicar e instalar
+1. Sube TODO (con las carpetas) a un repositorio de GitHub.
+2. Settings → Pages → Branch: main / (root).
+3. Abre https://TU-USUARIO.github.io/TU-REPO/ y toca "Instalar app".
+   - iPhone/iPad: Safari → Compartir → Agregar a inicio.
+4. Después de cualquier cambio sube los archivos y cambia `CACHE = "ruleta-elboom-v7"` a v8, v9…
 
-## Instalar
-- Android (Chrome): abre la liga → botón "Instalar app" arriba, o menú ⋮ → "Instalar app".
-- Laptop (Chrome o Edge): ícono de instalar en la barra de direcciones, o botón "Instalar app".
-- iPhone/iPad (Safari): Compartir → "Agregar a inicio".
-- APK (opcional): pwabuilder.com → pega la liga → Package for stores → Android.
-Una vez instalada funciona sin internet.
-
-## Actualizar
-Sube los archivos nuevos y cambia el número de versión en sw.js (ruleta-elboom-local-v6 → v7).
+Nota: abrir index.html con doble clic sirve para ver cambios, pero para instalar debe estar en https.
