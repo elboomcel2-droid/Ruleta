@@ -35,8 +35,9 @@
 
   <main class="layout">
     <section class="hero">
-      <span class="pill">BUENA SUERTE</span>
+      <span class="pill">✦ PREMIOS AL INSTANTE</span>
       <h1>GIRA Y <span>GANA</span></h1>
+      <p class="sub">La suerte está de tu lado, operador.</p>
     </section>
 
     <div class="stage">
@@ -72,7 +73,13 @@
         <label for="phone">Tu número de celular</label>
         <div class="money"><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg></span><input id="phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="12" placeholder="10 dígitos"></div>
         <label for="amount" class="field-gap">Monto de tu compra</label>
-        <div class="money"><span>$</span><input id="amount" inputmode="decimal" autocomplete="off" placeholder="0.00"></div>
+        <div class="money"><span>$</span><input id="amount" inputmode="decimal" autocomplete="off" placeholder="0.00">
+          <button type="button" class="scan-btn" id="scanBtn" aria-label="Escanear el QR del ticket">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><rect x="8" y="8" width="3" height="3"/><rect x="13" y="8" width="3" height="3"/><rect x="8" y="13" width="3" height="3"/><path d="M13 13h3v3"/></svg>
+            QR
+          </button>
+        </div>
+        <p class="scan-ok" id="scanOk" hidden>✓ Monto leído del ticket <button type="button">Quitar</button></p>
         <button class="spin" type="submit">VER MIS GIROS →</button>
         <p class="form-err" id="amountErr"></p>
       </form>
@@ -91,8 +98,9 @@
 <!-- Información (1 toque) -->
 <div class="overlay" id="infoModal" role="dialog" aria-modal="true">
   <div class="card sheet">
+    <button class="x-btn" data-close aria-label="Cerrar">✕</button>
     <h2>Cómo funciona</h2>
-    <p>Escribe el monto de tu compra y te diremos cuántos giros ganaste. Si te toca un premio, muéstralo al asesor en mostrador.</p>
+    <p>Registra tu celular y el monto de tu compra, o escanea el QR de tu ticket, y te diremos cuántos giros ganaste. Si te toca un premio, muéstralo al asesor en mostrador.</p>
     <h3>Premios</h3>
     <ul class="plist" id="prizeList"></ul>
     <button class="btn" data-close>Entendido</button>
@@ -102,11 +110,12 @@
 <!-- Configuración (5 toques) -->
 <div class="overlay" id="cfgModal" role="dialog" aria-modal="true" aria-labelledby="cfgTitle">
   <div class="card cfg sheet">
+    <button class="x-btn" data-close aria-label="Cerrar">✕</button>
     <h2 id="cfgTitle">Configuración</h2>
     <p class="hint">Todo se guarda en la base de datos de este dispositivo.</p>
     <div class="tabs">
       <button type="button" data-tab="t-premios" class="on">Premios</button>
-      <button type="button" data-tab="t-giros">Giros por compra</button>
+      <button type="button" data-tab="t-giros">Reglas de giros</button>
       <button type="button" data-tab="t-hist">Historial</button>
     </div>
 
@@ -118,12 +127,13 @@
     </div>
 
     <div id="t-giros" hidden>
-      <p class="hint">Cada fila indica desde qué monto de compra se dan esos giros.</p>
-      <div id="tierRows"></div>
-      <button class="add" id="addTier">+ Agregar rango</button>
+      <div class="maxrow"><span>Compra por cada giro</span><div class="unit pre" data-u="$"><input id="perSpin" type="number" min="1" step="0.01" inputmode="decimal"></div></div>
       <div class="maxrow"><span>Máximo de giros por compra</span><div class="unit" data-u="giros"><input id="maxSpins" type="number" min="1" max="50" inputmode="numeric"></div></div>
-      <h3>Así lo verá el cliente</h3>
+      <div class="maxrow"><span>Horas de espera por teléfono</span><div class="unit" data-u="horas"><input id="cooldown" type="number" min="0" step="0.5" inputmode="decimal"></div></div>
+      <label class="maxrow check"><span>Pedir escanear el QR del ticket<br><small>No deja escribir el monto a mano</small></span><input type="checkbox" id="requireQR"></label>
+      <h3>Así se aplican las reglas</h3>
       <ul class="tiers preview" id="tierPreview"></ul>
+      <button class="btn small ghost" id="resetPhones" type="button">Liberar todos los teléfonos</button>
     </div>
 
     <div id="t-hist" hidden>
@@ -145,9 +155,23 @@
 
 <div class="overlay" id="installModal" role="dialog" aria-modal="true">
   <div class="card sheet">
+    <button class="x-btn" data-close aria-label="Cerrar">✕</button>
     <h2>Instalar la app</h2>
     <div id="installSteps"></div>
     <button class="btn" data-close>Entendido</button>
+  </div>
+</div>
+
+<div class="overlay" id="scanModal" role="dialog" aria-modal="true" aria-labelledby="scanTitle">
+  <div class="card sheet scan">
+    <button class="x-btn" data-close aria-label="Cerrar">✕</button>
+    <h2 id="scanTitle">Escanear ticket</h2>
+    <p class="hint">Apunta la cámara al código QR del ticket.</p>
+    <div class="scan-box"><video id="scanVideo" playsinline muted></video><div class="scan-frame"></div></div>
+    <p class="scan-msg" id="scanMsg"></p>
+    <label class="btn ghost" for="scanFile">Usar una foto del ticket</label>
+    <input type="file" id="scanFile" accept="image/*" capture="environment" hidden>
+    <button class="btn ghost" data-close>Cancelar</button>
   </div>
 </div>
 
@@ -156,10 +180,13 @@
 <script src="js/utils.js"></script>
 <script src="js/config.js"></script>
 <script src="js/db.js"></script>
+<script src="js/control.js"></script>
 <script src="js/sound.js"></script>
 <script src="js/confetti.js"></script>
 <script src="js/wheel.js"></script>
 <script src="js/history.js"></script>
+<script src="js/vendor/jsQR.js"></script>
+<script src="js/scanner.js"></script>
 <script src="js/game.js"></script>
 <script src="js/admin.js"></script>
 <script src="js/install.js"></script>

@@ -5,8 +5,9 @@ let draft;
 function openConfig(){
   draft = structuredClone(cfg);
   $("cfgErr").textContent = "";
-  $("maxSpins").value = draft.maxSpins;
-  showTab("t-premios"); renderRows(); renderTiers();
+  $("perSpin").value = draft.perSpin; $("maxSpins").value = draft.maxSpins;
+  $("cooldown").value = draft.cooldownHours; $("requireQR").checked = !!draft.requireQR;
+  showTab("t-premios"); renderRows(); updatePreview();
   openModal("cfgModal");
 }
 function showTab(id){
@@ -62,37 +63,28 @@ $("fixBtn").onclick = () => {
 };
 $("resetCfg").onclick = () => { if(confirm("¿Restaurar los 8 premios originales?")){ draft.prizes = structuredClone(DEFAULT_CFG.prizes); renderRows(); } };
 
-// --- Giros por compra ---
-function renderTiers(){
-  $("tierRows").innerHTML = draft.tiers.map((t,i)=>`
-    <div class="trow" data-i="${i}">
-      <span>Desde</span>
-      <div class="unit pre" data-u="$"><input data-k="from" type="number" min="0" step="0.01" inputmode="decimal" value="${t.from}" aria-label="Monto desde"></div>
-      <span>dar</span>
-      <div class="unit" data-u="giros"><input data-k="spins" type="number" min="1" inputmode="numeric" value="${t.spins}" aria-label="Giros"></div>
-      <button class="del" data-del aria-label="Quitar rango" ${draft.tiers.length<=1?"disabled":""}>✕</button>
-    </div>`).join("");
-  updatePreview();
-}
+// --- Reglas de giros ---
 function updatePreview(){
-  const valid = draft.tiers.filter(t => t.from >= 0 && t.spins > 0);
-  $("tierPreview").innerHTML = valid.length ? tierLabels(valid, draft.maxSpins||1).map(t=>`<li>${t}</li>`).join("") : "";
+  const per = draft.perSpin || 0, max = draft.maxSpins || 0, h = draft.cooldownHours || 0;
+  if(!(per > 0) || !(max > 0)){ $("tierPreview").innerHTML = ""; return; }
+  const g = n => `<b>${n} ${n===1?"giro":"giros"}</b>`;
+  $("tierPreview").innerHTML = [
+    `Menos de ${money(per)}: <b>sin giros</b>`,
+    `${money(per)}: ${g(1)}`,
+    max > 1 ? `${money(per*2)}: ${g(2)}` : "",
+    `${money(per*max)} o más: ${g(max)} (máximo)`,
+    h ? `Un mismo teléfono: <b>1 vez cada ${h} ${h===1?"hora":"horas"}</b>` : `Teléfonos: <b>sin límite de tiempo</b>`,
+    draft.requireQR ? `Monto: <b>solo escaneando el ticket</b>` : `Monto: <b>escrito o escaneado</b>`
+  ].filter(Boolean).map(t=>`<li>${t}</li>`).join("");
 }
-$("tierRows").addEventListener("input", e => {
-  const el = e.target, i = +el.closest("[data-i]").dataset.i;
-  if(el.dataset.k === "from") draft.tiers[i].from = round2(parseFloat(el.value) || 0);
-  if(el.dataset.k === "spins") draft.tiers[i].spins = parseInt(el.value,10) || 0;
-  updatePreview();
-});
-$("tierRows").addEventListener("click", e => {
-  if(!e.target.matches("[data-del]")) return;
-  draft.tiers.splice(+e.target.closest(".trow").dataset.i, 1); renderTiers();
-});
-$("addTier").onclick = () => {
-  const last = [...draft.tiers].sort((a,b)=>a.from-b.from).pop();
-  draft.tiers.push({ from: last ? last.from + 10000 : 0.01, spins: last ? last.spins + 1 : 1 }); renderTiers();
-};
+$("perSpin").addEventListener("input", e => { draft.perSpin = round2(parseFloat(e.target.value) || 0); updatePreview(); });
 $("maxSpins").addEventListener("input", e => { draft.maxSpins = parseInt(e.target.value,10) || 0; updatePreview(); });
+$("cooldown").addEventListener("input", e => { draft.cooldownHours = Math.max(0, parseFloat(e.target.value) || 0); updatePreview(); });
+$("requireQR").addEventListener("change", e => { draft.requireQR = e.target.checked; updatePreview(); });
+$("resetPhones").onclick = async () => {
+  if(!confirm("¿Permitir que todos los teléfonos vuelvan a jugar ahora?")) return;
+  await resetPhoneControl(); $("cfgErr").textContent = "Listo: todos los teléfonos pueden volver a jugar.";
+};
 
 // --- Guardar ---
 $("saveCfg").onclick = async () => {
@@ -102,10 +94,9 @@ $("saveCfg").onclick = async () => {
   const bad = draft.prizes.find(p => p.win && MONEY_WORDS.test(p.name));
   if(bad){ showTab("t-premios"); return err(`"${bad.name}" parece descuento o dinero. Solo se permiten premios físicos.`); }
   if(Math.abs(totalPct()-100) >= 0.05){ showTab("t-premios"); return err("Los porcentajes deben sumar 100%."); }
-  if(draft.tiers.some(t => !(t.from > 0) || !(t.spins > 0))){ showTab("t-giros"); return err("Cada rango necesita un monto mayor a $0 y al menos 1 giro."); }
-  if(new Set(draft.tiers.map(t=>t.from)).size !== draft.tiers.length){ showTab("t-giros"); return err("Hay dos rangos con el mismo monto."); }
+  if(!(draft.perSpin > 0)){ showTab("t-giros"); return err("Escribe cuánto debe comprar el cliente por cada giro."); }
   if(!(draft.maxSpins >= 1)){ showTab("t-giros"); return err("El máximo de giros debe ser al menos 1."); }
-  draft.tiers.sort((a,b)=>a.from-b.from);
+  if(!(draft.cooldownHours >= 0)){ showTab("t-giros"); return err("Las horas de espera no pueden ser negativas."); }
   cfg = draft; await DB.set("config", cfg);
-  buildWheel(); render(); closeModals();
+  buildWheel(); applyQRRule(); render(); closeModals();
 };

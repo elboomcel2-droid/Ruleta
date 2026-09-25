@@ -15,17 +15,26 @@ $("phone").addEventListener("input", e => {
 });
 $("amountForm").onsubmit = async e => {
   e.preventDefault();
+  const err = m => { $("amountErr").textContent = m; };
   const tel = $("phone").value.replace(/\D/g,"");
-  if(tel.length !== 10) return $("amountErr").textContent = "Escribe tu número de celular a 10 dígitos.";
+  if(tel.length !== 10) return err("Escribe tu número de celular a 10 dígitos.");
+  if(cfg.requireQR && !scannedTicket) return err("Escanea el código QR de tu ticket.");
   const amount = round2(parseFloat($("amount").value));
-  if(!(amount > 0)) return $("amountErr").textContent = "Escribe el monto de tu compra.";
+  if(!(amount > 0)) return err("Escribe el monto de tu compra o escanea tu ticket.");
   const n = spinsFor(amount);
-  if(n <= 0){ return $("amountErr").textContent = "Este monto no alcanza para girar."; }
-  session = { id: Date.now(), tel, amount, total:n, left:n, results:[] };
+  if(n <= 0) return err("Este monto no alcanza para girar.");
+  const until = await cooldownUntil(tel);
+  if(until){ const h = fHour(until); return err(`Este número ya participó. Podrá volver a jugar a las ${h}${h.endsWith('.') ? '' : '.'}`); }
+  if(scannedTicket && await ticketUsed(scannedTicket.key)) return err("Este ticket ya se usó para girar.");
+  session = { id: Date.now(), tel, amount, total:n, left:n, results:[], ticket: scannedTicket ? scannedTicket.key : null };
   await DB.set("session", session);
+  await markPlay(tel);
+  if(scannedTicket) await markTicket(scannedTicket.key);
   await histSave();
-  $("amount").value = ""; $("phone").value = ""; render();
+  $("amount").value = ""; $("phone").value = ""; clearScan(); render();
 };
+// Si escriben el monto a mano, ya no cuenta como ticket leído
+$("amount").addEventListener("input", () => { if(scannedTicket) clearScan(); });
 
 
 /* ---------- Giro y resultados ---------- */
@@ -69,7 +78,8 @@ function finish(res){
   } else beep(300,.25,.05);
 
   const left = session.left;
-  let html = res.win
+  let html = `<button class="x-btn" data-close aria-label="Cerrar">✕</button>`;
+  html += res.win
     ? `<h2>¡GANASTE!</h2><div class="prize">${esc(res.name)}</div>
        <p>Muestra esta pantalla al asesor en mostrador para recoger tu premio.</p>`
     : `<h2>¡CASI!</h2><div class="prize">${esc(res.name)}</div><p>Esta vez no hubo premio.</p>`;
@@ -107,16 +117,17 @@ function render(){
 function openModal(id){ $(id).classList.add("open"); }
 function closeModals(){
   const wasResult = $("resultModal").classList.contains("open");
+  if($("scanModal").classList.contains("open")) stopScanner();
   document.querySelectorAll(".overlay.open").forEach(o=>o.classList.remove("open"));
   if(wasResult) endSessionIfDone();
 }
-document.addEventListener("click", e => { if(e.target.matches("[data-close]") || e.target.classList.contains("overlay")) closeModals(); });
-document.addEventListener("keydown", e => { if(e.key==="Escape") closeModals(); });
+// Las ventanas solo se cierran con la ✕ o con su botón (no tocando afuera ni con Esc)
+document.addEventListener("click", e => { if(e.target.closest("[data-close]")) closeModals(); });
 
 // 1 toque = información · 5 toques seguidos = configuración
 let taps = 0, tapTimer;
 $("infoBtn").addEventListener("click", () => {
   taps++; clearTimeout(tapTimer);
-  if(taps >= 5){ taps = 0; if(!spinning) openConfig(); return; }
+  if(taps >= 5){ taps = 0; if(!spinning && !document.querySelector(".overlay.open:not(#infoModal)")){ closeModals(); openConfig(); } return; }
   tapTimer = setTimeout(() => { if(taps === 1) openModal("infoModal"); taps = 0; }, 600);
 });

@@ -1,5 +1,5 @@
 /* ==========================================================
-   CONFIGURACIÓN EDITABLE: premios por defecto, rangos de giros y límites.
+   CONFIGURACIÓN EDITABLE: premios por defecto y reglas de giros.
    Se usan la primera vez o al restaurar; lo guardado en la app tiene prioridad.
    ========================================================== */
 const MIN_P = 2, MAX_P = 12;
@@ -16,6 +16,8 @@ const DEFAULT_CFG = {
     { name:"Lámpara de mano",  pct:6,  win:true  },
     { name:"Premio sorpresa",  pct:10, win:true  }
   ],
-  tiers: [ { from:0.01, spins:1 }, { from:2000.01, spins:5 }, { from:20000, spins:10 } ],
-  maxSpins: 10
+  perSpin: 2000,        // cada $2,000 de compra = 1 giro
+  maxSpins: 10,         // máximo de giros por compra
+  cooldownHours: 3,     // horas que un mismo teléfono debe esperar para volver a jugar (0 = sin límite)
+  requireQR: false      // true = el monto solo se captura escaneando el QR del ticket
 };

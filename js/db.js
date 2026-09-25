@@ -30,18 +30,15 @@ const DB = (() => {
 let cfg = structuredClone(DEFAULT_CFG);
 let session = null;   // { id, amount, total, left, results:[] }
 
-function validCfg(c){ return c && Array.isArray(c.prizes) && c.prizes.length >= MIN_P && Array.isArray(c.tiers) && c.tiers.length; }
-function spinsFor(amount){
-  const t = [...cfg.tiers].sort((a,b)=>a.from-b.from).filter(t => amount >= t.from).pop();
-  return t ? Math.min(t.spins, cfg.maxSpins) : 0;
+function validCfg(c){ return c && Array.isArray(c.prizes) && c.prizes.length >= MIN_P; }
+// Completa una configuración guardada con los valores nuevos que no tenía
+function normalizeCfg(saved){
+  const c = { ...structuredClone(DEFAULT_CFG), ...saved, prizes: saved.prizes };
+  delete c.tiers;
+  return c;
 }
-function tierLabels(tiers, max){
-  const t = [...tiers].sort((a,b)=>a.from-b.from);
-  return t.map((x,i) => {
-    const n = Math.min(x.spins, max), g = `<b>${n} ${n===1?"giro":"giros"}</b>`;
-    const next = t[i+1];
-    if(!next) return `${money(x.from)} o más: ${g}`;
-    const to = money(round2(next.from - 0.01));
-    return x.from <= 1 ? `Hasta ${to}: ${g}` : `${money(x.from)} a ${to}: ${g}`;
-  });
+// Cada $perSpin = 1 giro, con un máximo de maxSpins
+function spinsFor(amount){
+  const per = cfg.perSpin || 2000;
+  return Math.min(cfg.maxSpins, Math.floor((amount + 1e-6) / per));
 }

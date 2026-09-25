@@ -3,7 +3,8 @@
    ========================================================== */
 (async function init(){
   const saved = await DB.get("config");
-  if(validCfg(saved)) cfg = saved;
+  if(validCfg(saved)) cfg = normalizeCfg(saved);
+  applyQRRule();
   const s = await DB.get("session");
   if(s && s.left > 0) session = s;
   buildWheel(); render();
