@@ -151,8 +151,25 @@
       <input id="histSearch" class="hist-search" type="tel" inputmode="numeric" placeholder="Buscar por teléfono o folio">
       <p class="hint" id="histHint"></p>
       <div class="hist"><table><thead><tr><th>Fecha</th><th>Teléfono</th><th>Tiros</th><th>Ganó</th></tr></thead><tbody id="histBody"></tbody></table></div>
+      <div class="report-box" id="reportBox" hidden>
+        <h3>Reporte PDF (máximo 1 mes)</h3>
+        <div class="rep-chips">
+          <button type="button" data-range="month">Este mes</button>
+          <button type="button" data-range="prev">Mes pasado</button>
+          <button type="button" data-range="30">Últimos 30 días</button>
+        </div>
+        <div class="rep-dates">
+          <label>Desde<input type="date" id="repFrom"></label>
+          <label>Hasta<input type="date" id="repTo"></label>
+        </div>
+        <label class="rep-branch">Sucursal
+          <select id="repBranch"><option value="">Sin especificar</option><option>Alpuyeca (Matriz)</option><option>Tizoc (Jiutepec)</option><option>Chilpancingo</option><option>Acapulco</option><option>Galeana</option></select>
+        </label>
+        <p class="err" id="repErr"></p>
+        <button class="btn" id="repGo" type="button">Descargar PDF</button>
+      </div>
       <div class="row-actions">
-        <button class="btn small" id="exportBtn">Exportar CSV</button>
+        <button class="btn small" id="reportBtn" type="button">Reporte PDF</button>
         <button class="btn small ghost" id="cancelSession" hidden>Cancelar giros pendientes</button>
         <button class="btn small danger" id="clearHist">Borrar historial</button>
         <button class="btn small ghost" id="cfgInstall">Instalar app</button>
@@ -202,6 +219,7 @@
   </div>
 </div>
 
+<img id="printLogo" src="img/logo-print.png" alt="" hidden>
 <canvas id="confetti"></canvas>
 
 <script src="js/utils.js"></script>
@@ -212,6 +230,9 @@
 <script src="js/confetti.js"></script>
 <script src="js/wheel.js"></script>
 <script src="js/history.js"></script>
+<script src="js/vendor/jspdf.umd.min.js"></script>
+<script src="js/vendor/jspdf.plugin.autotable.min.js"></script>
+<script src="js/report.js"></script>
 <script src="js/vendor/jsQR.js"></script>
 <script src="js/scanner.js"></script>
 <script src="js/game.js"></script>

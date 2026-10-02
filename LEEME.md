@@ -19,6 +19,7 @@ js/install.js       Botón e instrucciones para instalar
 js/main.js          Arranque
 js/utils.js         Funciones de apoyo
 img/logo.jpg        Logo del encabezado (reemplázalo con el mismo nombre)
+img/logo-print.png  Logo sin fondo amarillo para el reporte PDF
 icons/              Íconos de la app instalada
 manifest.json       Nombre e íconos de la app instalada
 sw.js               Uso sin internet (sube la versión CACHE al cambiar archivos)

@@ -218,3 +218,15 @@ label.btn{display:block;text-align:center;box-sizing:border-box}
 .cam-switch[hidden]{display:none}
 .tag-folio{color:var(--muted);font-weight:700;font-size:10.5px;letter-spacing:.03em}
 .passbox[hidden]{display:none}
+
+/* ---------- Reporte PDF ---------- */
+.report-box{background:var(--field);border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:12px}
+.report-box[hidden]{display:none}
+.report-box h3{margin:0 0 10px;color:var(--text)}
+.rep-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.rep-chips button{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:999px;padding:8px 12px;font:700 12.5px "Montserrat",sans-serif;cursor:pointer}
+.rep-chips button.on{background:var(--gold);color:var(--ink);border-color:var(--gold)}
+.rep-dates{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rep-dates label,.rep-branch{display:grid;gap:4px;font-size:12px;font-weight:700;color:var(--muted)}
+.rep-branch{margin-top:8px}
+.report-box input,.report-box select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font:600 14px "Montserrat",sans-serif;color-scheme:dark}

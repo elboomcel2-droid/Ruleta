@@ -1,9 +1,9 @@
 /* Service worker: permite instalar la app y usarla sin internet.
    Al cambiar archivos, sube el número de versión para que los dispositivos se actualicen. */
-const CACHE = "ruleta-elboom-v15";
+const CACHE = "ruleta-elboom-v16";
 const SHELL = [
   "./", "./index.html", "./manifest.json", "./css/styles.css", "./img/logo.jpg",
-  "./js/utils.js", "./js/config.js", "./js/db.js", "./js/control.js", "./js/scanner.js", "./js/vendor/jsQR.js", "./js/sound.js", "./js/confetti.js", "./js/wheel.js",
+  "./js/utils.js", "./js/config.js", "./js/db.js", "./js/control.js", "./js/scanner.js", "./js/vendor/jsQR.js", "./js/vendor/jspdf.umd.min.js", "./js/vendor/jspdf.plugin.autotable.min.js", "./js/report.js", "./img/logo-print.png", "./js/sound.js", "./js/confetti.js", "./js/wheel.js",
   "./js/history.js", "./js/game.js", "./js/admin.js", "./js/install.js", "./js/main.js",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable.png", "./icons/apple-touch-icon.png"
 ];

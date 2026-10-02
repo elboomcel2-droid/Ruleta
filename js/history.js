@@ -36,7 +36,7 @@ async function renderHistory(){
   $("stats").innerHTML = `<div><b>${all.length}</b><small>Compras</small></div><div><b>${premios}</b><small>Premios</small></div><div><b>${manual}</b><small>A mano</small></div>`;
   $("histHint").textContent = raw
     ? `${list.length} compra(s) encontradas`
-    : list.length > HIST_SHOW ? `Se muestran las ${HIST_SHOW} más recientes. El CSV lleva todas.` : "";
+    : list.length > HIST_SHOW ? `Se muestran las ${HIST_SHOW} más recientes. El reporte PDF incluye todas las del periodo.` : "";
   $("histBody").innerHTML = list.slice(0, HIST_SHOW).map(r=>`<tr>
       <td>${fShort(r.fecha)}</td>
       <td>${fmtTel(r.tel||"")}${r.ticket?`<br><small class="tag-folio">${esc(r.ticket)}</small>`:""}${r.manual?`<br><small class="tag-manual">Monto a mano</small>`:""}</td>
@@ -46,18 +46,8 @@ async function renderHistory(){
   $("cancelSession").hidden = !(session && session.left > 0);
 }
 $("histSearch").addEventListener("input", () => renderHistory());
-$("exportBtn").onclick = async () => {
-  const all = (await DB.all()).sort((a,b)=>a.fecha-b.fecha);
-  const rows = [["Fecha","Teléfono","Monto","Ticket","Monto capturado","Tiros","Premios"],
-    ...all.map(r=>[new Date(r.fecha).toLocaleString("es-MX"), r.tel, r.monto ?? "", r.ticket || "", r.manual?"A mano (con contraseña)":"QR del ticket", r.tiros, premiosTxt(r.premios)])];
-  const csv = "\ufeff" + rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([csv], { type:"text/csv;charset=utf-8" }));
-  a.download = `ruleta-historial-${new Date().toISOString().slice(0,10)}.csv`;
-  document.body.appendChild(a); a.click(); a.remove();
-};
 $("clearHist").onclick = async () => {
-  if(!confirm("¿Borrar TODO el historial de este dispositivo? Exporta el CSV antes si lo necesitas.")) return;
+  if(!confirm("¿Borrar TODO el historial de este dispositivo? Descarga el reporte PDF antes si lo necesitas.")) return;
   if(!confirm("Esta acción no se puede deshacer. ¿Continuar?")) return;
   await DB.clear(); renderHistory();
 };
