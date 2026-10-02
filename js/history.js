@@ -29,23 +29,23 @@ function premiosTxt(list){
   return [...m].map(([n,c]) => c>1 ? `${n} ×${c}` : n).join(", ");
 }
 async function renderHistory(){
-  const q = ($("histSearch").value || "").replace(/\D/g,"");
+  const raw = ($("histSearch").value || "").trim().toUpperCase(), q = /^\d+$/.test(raw) ? raw : "";
   const all = (await DB.all()).sort((a,b)=>b.fecha-a.fecha);
-  const list = q ? all.filter(r => (r.tel||"").includes(q)) : all;
+  const list = raw ? all.filter(r => (q && (r.tel||"").includes(q)) || (r.ticket||"").includes(raw)) : all;
   const premios = all.reduce((a,r)=>a+(r.premios?.length||0),0), manual = all.filter(r=>r.manual).length;
   $("stats").innerHTML = `<div><b>${all.length}</b><small>Compras</small></div><div><b>${premios}</b><small>Premios</small></div><div><b>${manual}</b><small>A mano</small></div>`;
-  $("histHint").textContent = q
-    ? `${list.length} compra(s) del número ${fmtTel(q.padEnd(10,"·")).trim()}`
+  $("histHint").textContent = raw
+    ? `${list.length} compra(s) encontradas`
     : list.length > HIST_SHOW ? `Se muestran las ${HIST_SHOW} más recientes. El CSV lleva todas.` : "";
   $("histBody").innerHTML = list.slice(0, HIST_SHOW).map(r=>`<tr>
       <td>${fShort(r.fecha)}</td>
-      <td>${fmtTel(r.tel||"")}${r.manual?`<br><small class="tag-manual">Monto a mano</small>`:""}</td>
+      <td>${fmtTel(r.tel||"")}${r.ticket?`<br><small class="tag-folio">${esc(r.ticket)}</small>`:""}${r.manual?`<br><small class="tag-manual">Monto a mano</small>`:""}</td>
       <td>${r.tiros===r.total?r.tiros:`${r.tiros} de ${r.total}`}</td>
       <td class="prz">${esc(premiosTxt(r.premios))}</td></tr>`).join("")
-    || `<tr><td colspan="4" style="color:var(--muted)">${q ? "No hay compras con ese número." : "Todavía no hay registros."}</td></tr>`;
+    || `<tr><td colspan="4" style="color:var(--muted)">${raw ? "No hay compras con esa búsqueda." : "Todavía no hay registros."}</td></tr>`;
   $("cancelSession").hidden = !(session && session.left > 0);
 }
-$("histSearch").addEventListener("input", e => { e.target.value = e.target.value.replace(/\D/g,"").slice(0,10); renderHistory(); });
+$("histSearch").addEventListener("input", () => renderHistory());
 $("exportBtn").onclick = async () => {
   const all = (await DB.all()).sort((a,b)=>a.fecha-b.fecha);
   const rows = [["Fecha","Teléfono","Monto","Ticket","Monto capturado","Tiros","Premios"],

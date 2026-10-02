@@ -11,6 +11,7 @@ const fmtTel = t => t.replace(/(\d{3})(\d{3})(\d{4})/, "$1 $2 $3");
 $("phone").addEventListener("input", e => {
   const d = e.target.value.replace(/\D/g,"").slice(0,10);
   e.target.value = d.length > 6 ? `${d.slice(0,3)} ${d.slice(3,6)} ${d.slice(6)}` : d.length > 3 ? `${d.slice(0,3)} ${d.slice(3)}` : d;
+  if(d.length === 10 && !scannedTicket) $("ticketCode").focus();   // listo para la pistola
   $("amountErr").textContent = "";
 });
 $("amountForm").onsubmit = async e => {
@@ -25,11 +26,11 @@ $("amountForm").onsubmit = async e => {
   if(n <= 0) return err("Este monto no alcanza para girar.");
   const until = await cooldownUntil(tel);
   if(until){ const h = fHour(until); return err(`Este número ya participó. Podrá volver a jugar a las ${h}${h.endsWith('.') ? '' : '.'}`); }
-  if(scannedTicket && await ticketUsed(scannedTicket.key)) return err("Este ticket ya se usó para girar.");
-  session = { id: Date.now(), tel, amount, total:n, left:n, results:[], ticket: scannedTicket ? scannedTicket.key : null, manual: !scannedTicket };
+  if(scannedTicket){ const u = await ticketUsed(scannedTicket.key); if(u) return err(usedMsg(u)); }
+  session = { id: Date.now(), tel, amount, total:n, left:n, results:[], ticket: scannedTicket ? scannedTicket.key : null, manual: !scannedTicket || !!scannedTicket.typed };
   await DB.set("session", session);
   await markPlay(tel);
-  if(scannedTicket) await markTicket(scannedTicket.key);
+  if(scannedTicket) await markTicket(scannedTicket.key, tel);
   await histSave();
   $("amount").value = ""; $("phone").value = ""; clearScan(); render();
 };

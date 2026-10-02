@@ -6,7 +6,7 @@ index.html          Estructura de la pantalla (textos, formularios, ventanas)
 css/styles.css      Diseño: colores (en :root), tamaños y versiones celular/tablet/laptop
 js/config.js        ← LO MÁS EDITADO: premios por defecto, reglas de giros, palabras prohibidas
 js/control.js       Control de 1 participación cada X horas por teléfono y tickets ya usados
-js/scanner.js       Lectura del QR del ticket (función parseTicketQR)
+js/scanner.js       Lectura del ticket: cámara, foto o pistola escáner (GUN_MAX_AVG_MS) y formato (parseBoomTicket)
 js/vendor/jsQR.js   Lector de QR para navegadores sin lector propio
 js/wheel.js         Dibujo de la ruleta, acomodo automático del texto (objeto TXT) y flecha
 js/game.js          Flujo: teléfono + monto, giros, resultados, ventanas
@@ -43,3 +43,6 @@ sw.js               Uso sin internet (sube la versión CACHE al cambiar archivos
 Nota: abrir index.html con doble clic sirve para ver cambios, pero para instalar debe estar en https.
 
 Nota: la cámara solo funciona con la app publicada en https (GitHub Pages sirve). Si no hay cámara, se puede usar una foto del ticket.
+
+Pistola escáner: debe estar configurada como teclado (HID/USB o Bluetooth), de preferencia con Enter al final. Por defecto solo se acepta escaneando (allowManual: false). Si activas "Permitir captura a mano con contraseña" en Reglas de giros, un código tecleado pide la contraseña.
+Folios: cada folio de ticket solo puede usarse una vez y se recuerda para siempre en el dispositivo.

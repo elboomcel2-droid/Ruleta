@@ -72,14 +72,16 @@
       <form class="amount" id="amountForm" novalidate>
         <label for="phone">Tu número de celular</label>
         <div class="money"><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg></span><input id="phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="12" placeholder="10 dígitos"></div>
-        <label for="amount" class="field-gap">Monto de tu compra</label>
-        <div class="money"><span>$</span><input id="amount" inputmode="decimal" autocomplete="off" placeholder="0.00">
-          <button type="button" class="scan-btn" id="scanBtn" aria-label="Escanear el QR del ticket">
+        <label for="ticketCode" class="field-gap">Ticket</label>
+        <div class="money"><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6v12M7 6v12M10 6v12M14 6v12M17 6v12M20 6v12"/></svg></span><input id="ticketCode" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Escanea el ticket">
+          <button type="button" class="scan-btn" id="scanBtn" aria-label="Escanear el QR del ticket con la cámara">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><rect x="8" y="8" width="3" height="3"/><rect x="13" y="8" width="3" height="3"/><rect x="8" y="13" width="3" height="3"/><path d="M13 13h3v3"/></svg>
             QR
           </button>
         </div>
         <p class="scan-ok" id="scanOk" hidden>✓ Monto leído del ticket <button type="button">Quitar</button></p>
+        <label for="amount" class="field-gap">Monto de tu compra</label>
+        <div class="money"><span>$</span><input id="amount" inputmode="decimal" autocomplete="off" placeholder="0.00"></div>
         <p class="scan-ok manual" id="manualOk" hidden>🔓 Monto a mano autorizado <button type="button">Cancelar</button></p>
         <button type="button" class="manual-btn" id="manualBtn">🔒 ¿Sin QR? Escribir monto a mano</button>
         <button class="spin" type="submit">VER MIS GIROS →</button>
@@ -132,7 +134,8 @@
       <div class="maxrow"><span>Compra por cada giro</span><div class="unit pre" data-u="$"><input id="perSpin" type="number" min="1" step="0.01" inputmode="decimal"></div></div>
       <div class="maxrow"><span>Máximo de giros por compra</span><div class="unit" data-u="giros"><input id="maxSpins" type="number" min="1" max="50" inputmode="numeric"></div></div>
       <div class="maxrow"><span>Horas de espera por teléfono</span><div class="unit" data-u="horas"><input id="cooldown" type="number" min="0" step="0.5" inputmode="decimal"></div></div>
-      <div class="passbox">
+      <label class="maxrow check"><span>Permitir captura a mano con contraseña<br><small>Apagado: solo se acepta escaneando el ticket</small></span><input type="checkbox" id="allowManual"></label>
+      <div class="passbox" id="passbox">
         <span>Contraseña para escribir el monto a mano</span>
         <small>Déjalo vacío para no cambiarla.</small>
         <input id="newPass" type="password" autocomplete="new-password" placeholder="Nueva contraseña">
@@ -145,7 +148,7 @@
 
     <div id="t-hist" hidden>
       <div class="stats" id="stats"></div>
-      <input id="histSearch" class="hist-search" type="tel" inputmode="numeric" placeholder="Buscar por teléfono">
+      <input id="histSearch" class="hist-search" type="tel" inputmode="numeric" placeholder="Buscar por teléfono o folio">
       <p class="hint" id="histHint"></p>
       <div class="hist"><table><thead><tr><th>Fecha</th><th>Teléfono</th><th>Tiros</th><th>Ganó</th></tr></thead><tbody id="histBody"></tbody></table></div>
       <div class="row-actions">
@@ -177,6 +180,7 @@
     <h2 id="scanTitle">Escanear ticket</h2>
     <p class="hint">Apunta la cámara al código QR del ticket.</p>
     <div class="scan-box"><video id="scanVideo" playsinline muted></video><div class="scan-frame"></div></div>
+    <button type="button" class="btn ghost cam-switch" id="camSwitch" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M20 7h-3l-2-3H9L7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1z"/><path d="M9 13a3 3 0 0 1 5-2.2M15 13a3 3 0 0 1-5 2.2M14 9v2h-2M10 17v-2h2"/></svg> Usar cámara frontal</button>
     <p class="scan-msg" id="scanMsg"></p>
     <label class="btn ghost" for="scanFile">Usar una foto del ticket</label>
     <input type="file" id="scanFile" accept="image/*" capture="environment" hidden>
@@ -187,8 +191,8 @@
 <div class="overlay" id="passModal" role="dialog" aria-modal="true" aria-labelledby="passTitle">
   <div class="card sheet">
     <button class="x-btn" data-close aria-label="Cerrar">✕</button>
-    <h2 id="passTitle">Monto a mano</h2>
-    <p class="hint">Solo personal autorizado. Escribe la contraseña para capturar el monto sin QR.</p>
+    <h2 id="passTitle">Autorización</h2>
+    <p class="hint" id="passHint">Solo personal autorizado. Escribe la contraseña para capturar el monto sin QR.</p>
     <form id="passForm" class="pass-form">
       <input id="passInput" type="password" autocomplete="off" placeholder="Contraseña">
       <p class="form-err" id="passErr"></p>

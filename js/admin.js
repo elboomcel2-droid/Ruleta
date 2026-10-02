@@ -7,6 +7,7 @@ function openConfig(){
   $("cfgErr").textContent = "";
   $("perSpin").value = draft.perSpin; $("maxSpins").value = draft.maxSpins;
   $("cooldown").value = draft.cooldownHours; $("newPass").value = ""; $("newPass2").value = "";
+  $("allowManual").checked = !!draft.allowManual; $("passbox").hidden = !draft.allowManual;
   showTab("t-premios"); renderRows(); updatePreview();
   openModal("cfgModal");
 }
@@ -74,9 +75,10 @@ function updatePreview(){
     max > 1 ? `${money(per*2)}: ${g(2)}` : "",
     `${money(per*max)} o más: ${g(max)} (máximo)`,
     h ? `Un mismo teléfono: <b>1 vez cada ${h} ${h===1?"hora":"horas"}</b>` : `Teléfonos: <b>sin límite de tiempo</b>`,
-    `Monto: <b>escaneando el QR</b> · a mano solo con contraseña`
+    draft.allowManual ? `Captura: <b>escaneando</b> · a mano solo con contraseña` : `Captura: <b>solo escaneando el ticket</b>`
   ].filter(Boolean).map(t=>`<li>${t}</li>`).join("");
 }
+$("allowManual").addEventListener("change", e => { draft.allowManual = e.target.checked; $("passbox").hidden = !draft.allowManual; updatePreview(); });
 $("perSpin").addEventListener("input", e => { draft.perSpin = round2(parseFloat(e.target.value) || 0); updatePreview(); });
 $("maxSpins").addEventListener("input", e => { draft.maxSpins = parseInt(e.target.value,10) || 0; updatePreview(); });
 $("cooldown").addEventListener("input", e => { draft.cooldownHours = Math.max(0, parseFloat(e.target.value) || 0); updatePreview(); });

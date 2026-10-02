@@ -21,5 +21,6 @@ const DEFAULT_CFG = {
   perSpin: 2000,        // cada $2,000 de compra = 1 giro
   maxSpins: 10,         // máximo de giros por compra
   cooldownHours: 3,     // horas que un mismo teléfono debe esperar para volver a jugar (0 = sin límite)
-  manualPassHash: null  // contraseña para escribir el monto a mano (se cambia desde la app)
+  allowManual: false,   // false = solo escaneando el ticket (pistola o cámara); true = también a mano con contraseña
+  manualPassHash: null  // contraseña para la captura a mano (se cambia desde la app)
 };

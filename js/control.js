@@ -2,7 +2,7 @@
    Control por teléfono (una participación cada X horas)
    y tickets ya usados (un ticket no se puede usar dos veces)
    ========================================================== */
-const TICKET_KEEP_DAYS = 30;   // días que se recuerda un ticket usado
+// Los folios usados se guardan para siempre en el dispositivo: un ticket solo da giros una vez.
 
 async function cooldownUntil(tel){
   const h = +cfg.cooldownHours || 0;
@@ -20,17 +20,22 @@ async function markPlay(tel){
 }
 async function resetPhoneControl(){ await DB.set("phone_last", {}); }
 
+// Devuelve { t, tel } si el folio ya se usó, o null
 async function ticketUsed(key){
-  if(!key) return false;
-  const m = (await DB.get("tickets_used")) || {};
-  return !!m[key];
+  if(!key) return null;
+  const m = (await DB.get("tickets_used")) || {}, v = m[key];
+  if(!v) return null;
+  return typeof v === "number" ? { t:v, tel:"" } : v;
 }
-async function markTicket(key){
+async function markTicket(key, tel){
   if(!key) return;
-  const m = (await DB.get("tickets_used")) || {}, now = Date.now();
-  for(const k in m) if(now - m[k] > TICKET_KEEP_DAYS * 864e5) delete m[k];
-  m[key] = now;
+  const m = (await DB.get("tickets_used")) || {};
+  m[key] = { t:Date.now(), tel: tel || "" };
   await DB.set("tickets_used", m);
+}
+function usedMsg(u){
+  const d = new Date(u.t).toLocaleString("es-MX",{ day:"2-digit", month:"2-digit", year:"2-digit", hour:"2-digit", minute:"2-digit" });
+  return `Este ticket ya se usó el ${d}${u.tel ? ` (cel. ${fmtTel(u.tel)})` : ""}.`;
 }
 const fHour = t => new Date(t).toLocaleTimeString("es-MX", { hour:"2-digit", minute:"2-digit" });
 
