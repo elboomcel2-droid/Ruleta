@@ -15,14 +15,17 @@ let scanStream = null, scanRAF = 0, scanBusy = false;
    Si el QR de tus tickets trae otro formato, ajusta esta función. */
 // ---------- Formato de los tickets del cajero El Boom ----------
 // Ejemplo: NVAL-00175023446.79  →  serie "NVAL", folio "0017502", monto 3446.79
+// Tolera lo que cambian algunas pistolas según el idioma del teclado:
+// el guion puede llegar como ' / ? _ o no llegar, el punto como coma, y espacios o caracteres extra.
 // Si el folio de tus tickets cambia de largo, ajusta FOLIO_DIGITS.
 const FOLIO_DIGITS = 7;
-const BOOM_TICKET = new RegExp(`^([A-Z]+)-(\\d{${FOLIO_DIGITS}})(\\d+\\.\\d{2})$`, "i");
+const BOOM_TICKET = new RegExp(`([A-Z]{2,8})[^A-Z0-9]?(\\d{${FOLIO_DIGITS}})(\\d{1,8})[^A-Z0-9](\\d{2})(?!\\d)`, "i");
 function parseBoomTicket(text){
-  const m = text.replace(/\s+/g, "").match(BOOM_TICKET);
+  const m = String(text).replace(/\s+/g, "").toUpperCase().match(BOOM_TICKET);
   if(!m) return null;
-  const amount = parseFloat(m[3]);
-  return amount > 0 ? { amount: round2(amount), key: `${m[1]}-${m[2]}`.toUpperCase(), folio: `${m[1]}-${m[2]}`.toUpperCase() } : null;
+  const amount = parseFloat(`${m[3]}.${m[4]}`);
+  const folio = `${m[1]}-${m[2]}`;
+  return amount > 0 ? { amount: round2(amount), key: folio, folio } : null;
 }
 
 function parseTicketQR(raw){
@@ -144,7 +147,7 @@ function acceptTicket(t){
 // Regresa el monto a su estado normal: bloqueado hasta escanear o autorizar con contraseña
 function clearScan(){
   scannedTicket = null; manualUnlocked = false; pendingCode = null;
-  $("ticketCode").value = ""; $("ticketCode").readOnly = false;
+  $("ticketCode").value = ""; $("ticketCode").readOnly = false; $("amount").value = "";
   $("scanOk").hidden = true; $("manualOk").hidden = true;
   applyQRRule();
 }
@@ -207,53 +210,69 @@ $("scanFile").addEventListener("change", async e => {
 });
 
 /* ---------- Pistola escáner (lector de código que escribe como teclado) ----------
-   La pistola "teclea" el contenido del QR muy rápido y casi siempre termina con Enter.
-   Si el código se escribe a mano (más lento), se pide la contraseña para evitar montos inventados. */
-const GUN_MAX_AVG_MS = 45;          // promedio entre teclas de una pistola; a mano suele ser > 100 ms
-let keyTimes = [], tcTimer = 0;
+   La pistola "teclea" el contenido del QR muy rápido (y casi siempre termina con Enter).
+   Se mide la velocidad con los cambios del campo, así funciona igual en Android, iPad, Windows o Mac.
+   Una persona tecleando es mucho más lenta; eso se trata como captura a mano. */
+const GUN_MAX_AVG_MS = 90;          // promedio máximo entre caracteres de una pistola (a mano suele ser > 150 ms)
 const tc = $("ticketCode");
-const typedByGun = times => {
-  if(times.length < 8) return false;
-  return (times[times.length-1] - times[0]) / (times.length - 1) <= GUN_MAX_AVG_MS;
-};
-async function submitTicketCode(times){
+let burst = { start:0, last:0, len:0 }, pasted = false, tcTimer = 0;
+const typedByGun = b => !pasted && b.len >= 8 && (b.len <= 1 || (b.last - b.start) / Math.max(1, b.len - 1) <= GUN_MAX_AVG_MS);
+
+async function submitTicketCode(b){
   clearTimeout(tcTimer);
-  const code = tc.value.trim(); const keys = times || keyTimes; keyTimes = [];
+  const code = tc.value.trim(), info = b || burst;
   if(!code || tc.readOnly) return;
   const t = parseTicketQR(code);
-  if(!t){ $("amountErr").textContent = "No se reconoce el código del ticket."; tc.select(); return; }
+  if(!t){
+    $("amountErr").textContent = `No se reconoce el código del ticket. Se leyó: "${code.slice(0,40)}"`;
+    tc.value = ""; burst = { start:0, last:0, len:0 }; return;
+  }
   const u = await ticketUsed(t.key);
   if(u){ $("amountErr").textContent = usedMsg(u); tc.value = ""; return; }
-  if(!typedByGun(keys)){
-    if(!cfg.allowManual){ tc.value = ""; $("amountErr").textContent = ONLY_SCAN_MSG; return; }
-    pendingCode = code; openPass("El código del ticket se escribió a mano. Para aceptarlo, escribe la contraseña."); return;
+  if(!typedByGun(info)){
+    if(!cfg.allowManual){ tc.value = ""; $("amountErr").textContent = ONLY_SCAN_MSG; pasted = false; return; }
+    pendingCode = code; pasted = false; openPass("El código del ticket se escribió a mano. Para aceptarlo, escribe la contraseña."); return;
   }
   acceptTicket(t);
 }
 // Pegar un código no cuenta como escaneo
-tc.addEventListener("paste", e => { if(!cfg.allowManual){ e.preventDefault(); $("amountErr").textContent = ONLY_SCAN_MSG; } else keyTimes = []; });
-tc.addEventListener("keydown", e => {
-  if(e.key === "Enter"){ e.preventDefault(); submitTicketCode(); return; }
-  if(e.key.length === 1) keyTimes.push(performance.now());
-  else if(e.key === "Backspace") keyTimes = [];
-});
+tc.addEventListener("paste", e => { if(!cfg.allowManual){ e.preventDefault(); $("amountErr").textContent = ONLY_SCAN_MSG; } else pasted = true; });
+tc.addEventListener("keydown", e => { if(e.key === "Enter" || e.keyCode === 13){ e.preventDefault(); submitTicketCode(); } });
 tc.addEventListener("input", () => {
   $("amountErr").textContent = "";
-  if(!tc.value) keyTimes = [];
+  const now = performance.now(), len = tc.value.length;
+  if(!len){ burst = { start:0, last:0, len:0 }; pasted = false; return; }
+  if(!burst.len || now - burst.last > 400) burst = { start:now, last:now, len };   // empieza una lectura nueva
+  else { burst.last = now; burst.len = len; }
   clearTimeout(tcTimer);                                   // pistolas configuradas sin Enter
-  tcTimer = setTimeout(() => { if(tc.value && parseTicketQR(tc.value)) submitTicketCode(); }, 300);
+  tcTimer = setTimeout(() => { if(tc.value) submitTicketCode(); }, 350);
 });
-// Si la pistola dispara sin tener ningún campo seleccionado, también se captura
-let gunBuf = "", gunTimes = [];
+
+// Si la pistola dispara con el cursor en el campo del celular, se pasa al campo Ticket
+$("phone").addEventListener("beforeinput", e => {
+  if(e.data && /[A-Za-z]/.test(e.data) && !tc.readOnly){
+    e.preventDefault(); tc.focus(); tc.value = e.data;
+    burst = { start:performance.now(), last:performance.now(), len:e.data.length };
+  }
+});
+// Si la pistola dispara sin ningún campo seleccionado, también se captura
+let gunBuf = "", gunStart = 0, gunLast = 0;
 document.addEventListener("keydown", e => {
   const a = document.activeElement;
-  if(a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA") ) return;
-  if(document.querySelector(".overlay.open") || !$("playBox").hidden) return;
+  if(a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA")) return;
+  if(document.querySelector(".overlay.open") || !$("playBox").hidden || tc.readOnly) return;
   const now = performance.now();
-  if(gunTimes.length && now - gunTimes[gunTimes.length-1] > 120){ gunBuf = ""; gunTimes = []; }
+  if(gunBuf && now - gunLast > 400) gunBuf = "";
   if(e.key === "Enter"){
-    if(gunBuf.length >= 8 && typedByGun(gunTimes)){ e.preventDefault(); tc.value = gunBuf; submitTicketCode(gunTimes.slice()); }
-    gunBuf = ""; gunTimes = []; return;
+    if(gunBuf.length >= 8){ e.preventDefault(); tc.value = gunBuf; submitTicketCode({ start:gunStart, last:gunLast, len:gunBuf.length }); }
+    gunBuf = ""; return;
   }
-  if(e.key.length === 1){ gunBuf += e.key; gunTimes.push(now); }
+  if(e.key && e.key.length === 1){ if(!gunBuf) gunStart = now; gunBuf += e.key; gunLast = now; }
 });
+// Con "solo escaneo", el campo Ticket queda listo para la pistola cuando no se está usando otro campo
+function focusTicket(){
+  if(cfg.allowManual || tc.readOnly || !$("playBox").hidden || document.querySelector(".overlay.open")) return;
+  const a = document.activeElement;
+  if(!a || a === document.body) tc.focus({ preventScroll:true });
+}
+document.addEventListener("click", () => setTimeout(focusTicket, 0));
