@@ -26,7 +26,8 @@ sw.js               Uso sin internet (sube la versión CACHE al cambiar archivos
 
 ## Cambios comunes
 - Premios iniciales: `js/config.js` → `DEFAULT_CFG.prizes`. (Si la app ya guardó premios, usa "Restaurar premios originales" en la configuración.)
-- Reglas iniciales: `js/config.js` → `perSpin` (compra por giro), `maxSpins`, `cooldownHours`, `requireQR`.
+- Reglas iniciales: `js/config.js` → `perSpin` (compra por giro), `maxSpins`, `cooldownHours`.
+- Contraseña inicial del monto a mano: `js/config.js` → `DEFAULT_MANUAL_PASS` ("Boom2026"). Cámbiala desde la app: Configuración → Reglas de giros. Una vez cambiada en la app, la del archivo ya no se usa.
 - Formato del QR del ticket: `js/scanner.js` → `parseTicketQR`. Hoy lee facturas CFDI (parámetro tt), URLs con total/monto, JSON, texto "TOTAL: 123.45" o solo el número.
 - Colores: `css/styles.css` → `:root` (`--gold`, `--bg`, etc.).
 - Texto de la ruleta: `js/wheel.js` → `TXT` (tamaño máximo/mínimo, márgenes). Se elige solo entre texto horizontal o radial.

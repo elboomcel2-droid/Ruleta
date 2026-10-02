@@ -3,6 +3,8 @@
    Se usan la primera vez o al restaurar; lo guardado en la app tiene prioridad.
    ========================================================== */
 const MIN_P = 2, MAX_P = 12;
+// Contraseña inicial para escribir el monto a mano. Cámbiala desde Configuración → Reglas de giros.
+const DEFAULT_MANUAL_PASS = "Boom2026";
 const MONEY_WORDS = /(%|\$|descuento|dcto|bono|off\b|dinero|efectivo|vale|cup[oó]n|pesos|reembolso|cashback|gratis)/i;
 
 const DEFAULT_CFG = {
@@ -19,5 +21,5 @@ const DEFAULT_CFG = {
   perSpin: 2000,        // cada $2,000 de compra = 1 giro
   maxSpins: 10,         // máximo de giros por compra
   cooldownHours: 3,     // horas que un mismo teléfono debe esperar para volver a jugar (0 = sin límite)
-  requireQR: false      // true = el monto solo se captura escaneando el QR del ticket
+  manualPassHash: null  // contraseña para escribir el monto a mano (se cambia desde la app)
 };

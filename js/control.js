@@ -33,3 +33,18 @@ async function markTicket(key){
   await DB.set("tickets_used", m);
 }
 const fHour = t => new Date(t).toLocaleTimeString("es-MX", { hour:"2-digit", minute:"2-digit" });
+
+/* ---------- Contraseña para escribir el monto a mano ---------- */
+async function hashPass(p){
+  const data = new TextEncoder().encode("elboom-ruleta:" + p);
+  if(window.crypto && crypto.subtle){
+    const h = await crypto.subtle.digest("SHA-256", data);
+    return [...new Uint8Array(h)].map(b => b.toString(16).padStart(2,"0")).join("");
+  }
+  let h = 2166136261; for(const b of data){ h ^= b; h = Math.imul(h, 16777619) >>> 0; }   // respaldo sin https
+  return "f" + h.toString(16);
+}
+async function checkPass(p){
+  const target = cfg.manualPassHash || await hashPass(DEFAULT_MANUAL_PASS);
+  return (await hashPass(p)) === target;
+}

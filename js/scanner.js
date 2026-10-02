@@ -2,6 +2,7 @@
    Lectura del QR del ticket para obtener el monto de la compra
    ========================================================== */
 let scannedTicket = null;      // { amount, key } del último ticket leído
+let manualUnlocked = false;    // true = el personal autorizó escribir el monto a mano (solo para esta compra)
 let scanStream = null, scanRAF = 0, scanBusy = false;
 
 /* Interpreta el contenido del QR. Soporta:
@@ -92,19 +93,46 @@ async function handleQR(txt){
   scannedTicket = t;
   $("amount").value = t.amount.toFixed(2);
   $("amount").readOnly = true;
+  manualUnlocked = false; $("manualOk").hidden = true;
   $("scanOk").hidden = false; $("amountErr").textContent = "";
   beep(1320, .08, .06);
   closeModals();
 }
+// Regresa el monto a su estado normal: bloqueado hasta escanear o autorizar con contraseña
 function clearScan(){
-  scannedTicket = null; $("scanOk").hidden = true;
-  $("amount").readOnly = !!cfg.requireQR;
+  scannedTicket = null; manualUnlocked = false;
+  $("scanOk").hidden = true; $("manualOk").hidden = true;
+  applyQRRule();
 }
-// Aplica la regla "pedir QR": si está activa no se puede escribir el monto
 function applyQRRule(){
-  $("amount").readOnly = !!cfg.requireQR || !!scannedTicket;
-  $("amount").placeholder = cfg.requireQR ? "Escanea el ticket" : "0.00";
+  $("amount").readOnly = !manualUnlocked;
+  $("amount").placeholder = manualUnlocked ? "0.00" : "Escanea tu ticket";
+  $("manualBtn").hidden = manualUnlocked || !!scannedTicket;
 }
+
+/* ---------- Autorizar monto manual con contraseña ---------- */
+let passFails = 0, passLockUntil = 0;
+function openPass(){
+  $("passInput").value = ""; $("passErr").textContent = "";
+  openModal("passModal"); setTimeout(() => $("passInput").focus(), 50);
+}
+$("manualBtn").onclick = openPass;
+$("amount").addEventListener("click", () => { if($("amount").readOnly && !scannedTicket) $("amountErr").textContent = "Escanea el QR del ticket. Para escribirlo a mano pide autorización."; });
+$("passForm").onsubmit = async e => {
+  e.preventDefault();
+  if(Date.now() < passLockUntil){ $("passErr").textContent = `Demasiados intentos. Espera ${Math.ceil((passLockUntil-Date.now())/1000)} segundos.`; return; }
+  if(await checkPass($("passInput").value)){
+    passFails = 0; closeModals();
+    scannedTicket = null; $("scanOk").hidden = true;
+    manualUnlocked = true; $("manualOk").hidden = false; applyQRRule();
+    $("amount").value = ""; $("amount").focus(); $("amountErr").textContent = "";
+  } else {
+    passFails++; $("passInput").value = "";
+    if(passFails >= 5){ passFails = 0; passLockUntil = Date.now() + 60e3; $("passErr").textContent = "Contraseña incorrecta. Bloqueado 1 minuto."; }
+    else $("passErr").textContent = `Contraseña incorrecta (${passFails} de 5).`;
+  }
+};
+$("manualOk").querySelector("button").onclick = () => { $("amount").value = ""; clearScan(); };
 
 $("scanBtn").onclick = openScanner;
 $("scanOk").querySelector("button").onclick = () => { clearScan(); $("amount").value = ""; };

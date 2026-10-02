@@ -6,7 +6,7 @@ function openConfig(){
   draft = structuredClone(cfg);
   $("cfgErr").textContent = "";
   $("perSpin").value = draft.perSpin; $("maxSpins").value = draft.maxSpins;
-  $("cooldown").value = draft.cooldownHours; $("requireQR").checked = !!draft.requireQR;
+  $("cooldown").value = draft.cooldownHours; $("newPass").value = ""; $("newPass2").value = "";
   showTab("t-premios"); renderRows(); updatePreview();
   openModal("cfgModal");
 }
@@ -74,13 +74,12 @@ function updatePreview(){
     max > 1 ? `${money(per*2)}: ${g(2)}` : "",
     `${money(per*max)} o más: ${g(max)} (máximo)`,
     h ? `Un mismo teléfono: <b>1 vez cada ${h} ${h===1?"hora":"horas"}</b>` : `Teléfonos: <b>sin límite de tiempo</b>`,
-    draft.requireQR ? `Monto: <b>solo escaneando el ticket</b>` : `Monto: <b>escrito o escaneado</b>`
+    `Monto: <b>escaneando el QR</b> · a mano solo con contraseña`
   ].filter(Boolean).map(t=>`<li>${t}</li>`).join("");
 }
 $("perSpin").addEventListener("input", e => { draft.perSpin = round2(parseFloat(e.target.value) || 0); updatePreview(); });
 $("maxSpins").addEventListener("input", e => { draft.maxSpins = parseInt(e.target.value,10) || 0; updatePreview(); });
 $("cooldown").addEventListener("input", e => { draft.cooldownHours = Math.max(0, parseFloat(e.target.value) || 0); updatePreview(); });
-$("requireQR").addEventListener("change", e => { draft.requireQR = e.target.checked; updatePreview(); });
 $("resetPhones").onclick = async () => {
   if(!confirm("¿Permitir que todos los teléfonos vuelvan a jugar ahora?")) return;
   await resetPhoneControl(); $("cfgErr").textContent = "Listo: todos los teléfonos pueden volver a jugar.";
@@ -97,6 +96,13 @@ $("saveCfg").onclick = async () => {
   if(!(draft.perSpin > 0)){ showTab("t-giros"); return err("Escribe cuánto debe comprar el cliente por cada giro."); }
   if(!(draft.maxSpins >= 1)){ showTab("t-giros"); return err("El máximo de giros debe ser al menos 1."); }
   if(!(draft.cooldownHours >= 0)){ showTab("t-giros"); return err("Las horas de espera no pueden ser negativas."); }
+  const np = $("newPass").value, np2 = $("newPass2").value;
+  if(np || np2){
+    if(np.length < 4){ showTab("t-giros"); return err("La contraseña nueva debe tener al menos 4 caracteres."); }
+    if(np !== np2){ showTab("t-giros"); return err("Las contraseñas nuevas no coinciden."); }
+    draft.manualPassHash = await hashPass(np);
+  }
+  delete draft.requireQR;
   cfg = draft; await DB.set("config", cfg);
   buildWheel(); applyQRRule(); render(); closeModals();
 };

@@ -18,7 +18,7 @@ $("amountForm").onsubmit = async e => {
   const err = m => { $("amountErr").textContent = m; };
   const tel = $("phone").value.replace(/\D/g,"");
   if(tel.length !== 10) return err("Escribe tu número de celular a 10 dígitos.");
-  if(cfg.requireQR && !scannedTicket) return err("Escanea el código QR de tu ticket.");
+  if(!scannedTicket && !manualUnlocked) return err("Escanea el código QR de tu ticket.");
   const amount = round2(parseFloat($("amount").value));
   if(!(amount > 0)) return err("Escribe el monto de tu compra o escanea tu ticket.");
   const n = spinsFor(amount);
@@ -26,7 +26,7 @@ $("amountForm").onsubmit = async e => {
   const until = await cooldownUntil(tel);
   if(until){ const h = fHour(until); return err(`Este número ya participó. Podrá volver a jugar a las ${h}${h.endsWith('.') ? '' : '.'}`); }
   if(scannedTicket && await ticketUsed(scannedTicket.key)) return err("Este ticket ya se usó para girar.");
-  session = { id: Date.now(), tel, amount, total:n, left:n, results:[], ticket: scannedTicket ? scannedTicket.key : null };
+  session = { id: Date.now(), tel, amount, total:n, left:n, results:[], ticket: scannedTicket ? scannedTicket.key : null, manual: !scannedTicket };
   await DB.set("session", session);
   await markPlay(tel);
   if(scannedTicket) await markTicket(scannedTicket.key);
@@ -34,7 +34,6 @@ $("amountForm").onsubmit = async e => {
   $("amount").value = ""; $("phone").value = ""; clearScan(); render();
 };
 // Si escriben el monto a mano, ya no cuenta como ticket leído
-$("amount").addEventListener("input", () => { if(scannedTicket) clearScan(); });
 
 
 /* ---------- Giro y resultados ---------- */
