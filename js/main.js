@@ -5,6 +5,7 @@
   const saved = await DB.get("config");
   if(validCfg(saved)) cfg = normalizeCfg(saved);
   applyQRRule();
+  await histMigrate();
   const s = await DB.get("session");
   if(s && s.left > 0) session = s;
   buildWheel(); render();

@@ -208,3 +208,6 @@ label.btn{display:block;text-align:center;box-sizing:border-box}
 .passbox small{color:var(--muted);font-weight:600;font-size:11.5px}
 .passbox input{font-size:15px;padding:11px}
 .tag-manual{color:var(--gold);font-weight:800;font-size:10.5px}
+
+/* ---------- Historial ---------- */
+.hist-search{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font:600 14px "Montserrat",sans-serif;margin-bottom:8px}

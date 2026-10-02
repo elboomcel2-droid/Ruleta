@@ -16,12 +16,16 @@ const DB = (() => {
       t.oncomplete = () => res(req ? req.result : undefined); t.onerror = () => rej(t.error);
     }));
   }
+  // Pide al navegador que no borre los datos aunque falte espacio
+  if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
   const safe = (p, fb) => ok ? p().catch(e => { ok = false; return fb(); }) : Promise.resolve(fb());
   return {
     get: k => safe(() => tx("kv","readonly", s => s.get(k)), () => mem.kv[k]),
     set: (k,v) => safe(() => tx("kv","readwrite", s => s.put(v,k)), () => { mem.kv[k] = v; }),
     del: k => safe(() => tx("kv","readwrite", s => s.delete(k)), () => { delete mem.kv[k]; }),
     add: v => safe(() => tx("giros","readwrite", s => s.add(v)), () => { mem.giros.push(v); }),
+    put: v => safe(() => tx("giros","readwrite", s => s.put(v)), () => { mem.giros = mem.giros.filter(x => x.id !== v.id).concat(v); }),
+    count: () => safe(() => tx("giros","readonly", s => s.count()), () => mem.giros.length),
     all: () => safe(() => tx("giros","readonly", s => s.getAll()), () => mem.giros.slice()),
     clear: () => safe(() => tx("giros","readwrite", s => s.clear()), () => { mem.giros = []; })
   };

@@ -11,7 +11,7 @@ js/vendor/jsQR.js   Lector de QR para navegadores sin lector propio
 js/wheel.js         Dibujo de la ruleta, acomodo automático del texto (objeto TXT) y flecha
 js/game.js          Flujo: teléfono + monto, giros, resultados, ventanas
 js/admin.js         Panel de configuración (5 toques en el ícono i)
-js/history.js       Mini historial (HIST_MAX = 10)
+js/history.js       Historial de compras (HIST_MAX = 50000, se muestran HIST_SHOW = 100)
 js/db.js            Base de datos del dispositivo (IndexedDB)
 js/sound.js         Sonidos
 js/confetti.js      Confeti
@@ -28,7 +28,7 @@ sw.js               Uso sin internet (sube la versión CACHE al cambiar archivos
 - Premios iniciales: `js/config.js` → `DEFAULT_CFG.prizes`. (Si la app ya guardó premios, usa "Restaurar premios originales" en la configuración.)
 - Reglas iniciales: `js/config.js` → `perSpin` (compra por giro), `maxSpins`, `cooldownHours`.
 - Contraseña inicial del monto a mano: `js/config.js` → `DEFAULT_MANUAL_PASS` ("Boom2026"). Cámbiala desde la app: Configuración → Reglas de giros. Una vez cambiada en la app, la del archivo ya no se usa.
-- Formato del QR del ticket: `js/scanner.js` → `parseTicketQR`. Hoy lee facturas CFDI (parámetro tt), URLs con total/monto, JSON, texto "TOTAL: 123.45" o solo el número.
+- Formato del QR del ticket: `js/scanner.js` → `parseBoomTicket` (tickets del cajero: SERIE-FOLIO+MONTO, ej. NVAL-00175023446.79; largo del folio en `FOLIO_DIGITS = 7`) y `parseTicketQR` (otros formatos). Hoy lee facturas CFDI (parámetro tt), URLs con total/monto, JSON, texto "TOTAL: 123.45" o solo el número.
 - Colores: `css/styles.css` → `:root` (`--gold`, `--bg`, etc.).
 - Texto de la ruleta: `js/wheel.js` → `TXT` (tamaño máximo/mínimo, márgenes). Se elige solo entre texto horizontal o radial.
 - Textos de pantalla: `index.html`.

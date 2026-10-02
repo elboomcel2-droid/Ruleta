@@ -6,14 +6,29 @@ let manualUnlocked = false;    // true = el personal autorizó escribir el monto
 let scanStream = null, scanRAF = 0, scanBusy = false;
 
 /* Interpreta el contenido del QR. Soporta:
+   0) Ticket del cajero El Boom: NVAL-00175023446.79
    1) Factura CFDI del SAT: ...?id=UUID&re=..&rr=..&tt=0000000220.230000
    2) URL con parámetros total / monto / importe y folio / id
    3) JSON: {"total":220.23,"folio":"A123"}
    4) Texto con "TOTAL: 220.23"
    5) Solo el número: 220.23
    Si el QR de tus tickets trae otro formato, ajusta esta función. */
+// ---------- Formato de los tickets del cajero El Boom ----------
+// Ejemplo: NVAL-00175023446.79  →  serie "NVAL", folio "0017502", monto 3446.79
+// Si el folio de tus tickets cambia de largo, ajusta FOLIO_DIGITS.
+const FOLIO_DIGITS = 7;
+const BOOM_TICKET = new RegExp(`^([A-Z]+)-(\\d{${FOLIO_DIGITS}})(\\d+\\.\\d{2})$`, "i");
+function parseBoomTicket(text){
+  const m = text.replace(/\s+/g, "").match(BOOM_TICKET);
+  if(!m) return null;
+  const amount = parseFloat(m[3]);
+  return amount > 0 ? { amount: round2(amount), key: `${m[1]}-${m[2]}`.toUpperCase(), folio: `${m[1]}-${m[2]}`.toUpperCase() } : null;
+}
+
 function parseTicketQR(raw){
   const text = String(raw || "").trim();
+  const boom = parseBoomTicket(text);          // primero el formato del cajero
+  if(boom) return boom;
   let amount = NaN, key = null;
   try{
     const p = new URL(text).searchParams, get = n => p.get(n) || p.get(n.toUpperCase());
@@ -94,6 +109,7 @@ async function handleQR(txt){
   $("amount").value = t.amount.toFixed(2);
   $("amount").readOnly = true;
   manualUnlocked = false; $("manualOk").hidden = true;
+  $("scanOk").firstChild.textContent = t.folio ? `✓ Ticket ${t.folio} leído ` : "✓ Monto leído del ticket ";
   $("scanOk").hidden = false; $("amountErr").textContent = "";
   beep(1320, .08, .06);
   closeModals();
