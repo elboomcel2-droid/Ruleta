@@ -39,6 +39,8 @@ function validCfg(c){ return c && Array.isArray(c.prizes) && c.prizes.length >= 
 function normalizeCfg(saved){
   const c = { ...structuredClone(DEFAULT_CFG), ...saved, prizes: saved.prizes };
   delete c.tiers;
+  // El "Sigue jugando" anterior ahora se llama "Suerte la próxima"
+  c.prizes = c.prizes.map(p => (!p.win && /^sigue jugando$/i.test(p.name.trim())) ? { ...p, name:"Suerte la próxima" } : p);
   return c;
 }
 // Cada $perSpin = 1 giro, con un máximo de maxSpins

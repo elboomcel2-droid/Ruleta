@@ -230,3 +230,10 @@ label.btn{display:block;text-align:center;box-sizing:border-box}
 .rep-dates label,.rep-branch{display:grid;gap:4px;font-size:12px;font-weight:700;color:var(--muted)}
 .rep-branch{margin-top:8px}
 .report-box input,.report-box select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font:600 14px "Montserrat",sans-serif;color-scheme:dark}
+
+/* ---------- Perder: "Suerte la próxima" ---------- */
+.lose .light{animation:none;fill:#55555c}
+.lose #wheel{filter:grayscale(.85) brightness(.75) drop-shadow(0 10px 12px rgba(0,0,0,.65));transition:filter .4s}
+.lose-face{font-size:46px;line-height:1;color:#8d8d95;margin-bottom:6px}
+.card h2.lose-title{color:#c4c4ca;font-size:25px}
+.card .prize.lose{color:#a8a8b0}

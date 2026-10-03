@@ -32,3 +32,28 @@ function tickSound(intensity){
     o.connect(og).connect(a.destination); o.start(t); o.stop(t+.05);
   }catch(e){}
 }
+
+// "Wah wah wah waaa": trombón triste al perder
+function loseSound(){
+  try{
+    const a = audio(), t0 = a.currentTime + .02;
+    const out = a.createGain(); out.gain.value = .22;
+    const lp = a.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1100; lp.Q.value = 4;
+    lp.connect(out).connect(a.destination);
+    const notes = [[293.7,.32],[277.2,.32],[261.6,.32],[246.9,1.15]];   // Re, Do#, Do, Si (bajando)
+    let t = t0;
+    notes.forEach(([f,d], i) => {
+      const o = a.createOscillator(), g = a.createGain();
+      o.type = "sawtooth"; o.frequency.setValueAtTime(f*1.02, t); o.frequency.exponentialRampToValueAtTime(f, t+.08);
+      if(i === notes.length-1){                                      // última nota con vibrato y caída
+        const lfo = a.createOscillator(), lg = a.createGain(); lfo.frequency.value = 5.5; lg.gain.value = 6;
+        lfo.connect(lg).connect(o.frequency); lfo.start(t+.15); lfo.stop(t+d);
+        o.frequency.setValueAtTime(f, t+.7); o.frequency.exponentialRampToValueAtTime(f*.88, t+d);
+      }
+      g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(1, t+.04);
+      g.gain.setValueAtTime(1, t+d-.08); g.gain.exponentialRampToValueAtTime(.0001, t+d);
+      o.connect(g).connect(lp); o.start(t); o.stop(t+d+.02);
+      t += d + .04;
+    });
+  }catch(e){}
+}

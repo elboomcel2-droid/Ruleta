@@ -29,7 +29,7 @@ function renderRows(){
     </div>
     <div class="pmeta">
       <span class="swatch" style="background:${segColor(i,draft.prizes.length).fill}"></span>
-      <label><input type="checkbox" data-i="${i}" data-k="win" ${p.win?"":"checked"}> Sin premio (ej. Sigue jugando)</label>
+      <label><input type="checkbox" data-i="${i}" data-k="win" ${p.win?"":"checked"}> Sin premio (Suerte la próxima)</label>
     </div>`).join("");
   $("addRow").hidden = draft.prizes.length >= MAX_P;
   updateTotal();

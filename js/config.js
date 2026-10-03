@@ -12,7 +12,7 @@ const DEFAULT_CFG = {
     { name:"Gorra El Boom",    pct:12, win:true  },
     { name:"Playera El Boom",  pct:8,  win:true  },
     { name:"Termo El Boom",    pct:6,  win:true  },
-    { name:"Sigue jugando",    pct:35, win:false },
+    { name:"Suerte la próxima", pct:35, win:false },
     { name:"Llavero El Boom",  pct:15, win:true  },
     { name:"Kit de limpieza",  pct:8,  win:true  },
     { name:"Lámpara de mano",  pct:6,  win:true  },

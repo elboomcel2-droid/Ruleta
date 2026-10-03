@@ -75,14 +75,17 @@ function finish(res){
   if(res.win){
     $("wheelWrap").classList.add("win"); setTimeout(()=>$("wheelWrap").classList.remove("win"),1800);
     [880,1175,1568].forEach((f,k)=>beep(f,.16,.06,k*.12)); confetti();
-  } else beep(300,.25,.05);
+  } else {
+    $("wheelWrap").classList.add("lose"); setTimeout(()=>$("wheelWrap").classList.remove("lose"),2200);
+    loseSound(); confetti("lose");
+  }
 
   const left = session.left;
   let html = `<button class="x-btn" data-close aria-label="Cerrar">✕</button>`;
   html += res.win
     ? `<h2>¡GANASTE!</h2><div class="prize">${esc(res.name)}</div>
        <p>Muestra esta pantalla al asesor en mostrador para recoger tu premio.</p>`
-    : `<h2>¡CASI!</h2><div class="prize">${esc(res.name)}</div><p>Esta vez no hubo premio.</p>`;
+    : `<div class="lose-face" aria-hidden="true">☹</div><h2 class="lose-title">¡SUERTE LA PRÓXIMA!</h2>${/^suerte la pr[oó]xima$/i.test(res.name.trim()) ? "" : `<div class="prize lose">${esc(res.name)}</div>`}<p>Esta vez no hubo premio. ¡Gracias por participar!</p>`;
   if(left > 0){
     html += `<button class="btn" data-close>Seguir girando (${left} ${left===1?"giro":"giros"} más)</button>`;
   } else {
@@ -95,7 +98,7 @@ function finish(res){
     html += `<button class="btn" data-close>Terminar</button>`;
   }
   $("resultCard").innerHTML = html;
-  setTimeout(() => openModal("resultModal"), res.win ? 1100 : 500);
+  setTimeout(() => openModal("resultModal"), 1100);
   render();
 }
 async function endSessionIfDone(){
